@@ -1,0 +1,6 @@
+test/*
+train/*
+*.mat
+*.csv
+*.asv
+.git
