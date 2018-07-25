@@ -1,34 +1,29 @@
-load depths
-load train
-
-id = train.id;
-
-Z = depths.z(id);
-M = depths.Mean(id);
-S = depths.Std(id);
-
-M_m = depths.Mask_mean(id);
-M_s = depths.Mask_std(id);
-
-mlog = log(M_m+1);
-slog = log(M_s+1);
-
-Zstring = 'Depth';
-Mstring = 'Mean pixel value';
-Sstring = 'Standard deviation of pixel value';
-
-M_m_string = 'Mean of mask pixels';
-M_s_string = 'Std of mask pixels';
-mlog_string = 'Log of mean of mask';
-slog_string = 'Log of std of mask';
-
-
-color_scale = slog;
-color_string = slog_string;
-
 close all;
 
-tracer3(M,S,Z,color_scale,Mstring,Sstring,Zstring,color_string,20,"MSZ_Ms",'filled');
-tracer(M,S,color_scale,Mstring,Sstring,color_string,20,"MS_Ms",'filled');
-tracer(Z,M,color_scale,Zstring,Mstring,color_string,20,"ZM_Ms",'filled');
-tracer(Z,S,color_scale,Zstring,Sstring,color_string,20,"ZS_Ms",'filled');
+load Stats\Z
+load Stats\M
+load Stats\S
+
+load Stats\Lm.mat
+load Stats\Ls.mat
+
+X = [Z('Array') M('Array') S('Array') Lm('Array') Ls('Array')];
+
+nX = normalize(X);
+
+[C,explained] = ACP(nX);
+
+disp(explained);
+
+load Stats\mlog
+load Stats\lmlog.mat
+load Stats\M_m.mat
+load Stats\M_lm.mat
+
+colour = M_m;
+
+tracer3(C{1},C{2},C{3},colour,20,false,'filled');
+tracer(C{1},C{2},colour,20,false,'filled');
+
+% tracer3(M,S,Z,colour,20,true,'filled');
+% tracer(Z,M,colour,20,true,'filled');

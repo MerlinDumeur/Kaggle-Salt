@@ -1,18 +1,21 @@
-function [fig] = tracer(X,Y,Colour,Xlabel,Ylabel,Colorlabel,taille,filename,options)
-%TRACER Plots 
+function [fig] = tracer(X,Y,Colour,taille,save,options)
+%TRACER Plots
 %   
 
 fig = figure('pos',[0 0 1920 1080]);
 
-scatter(X,Y,taille,Colour,options);
+scatter(X('Array'),Y('Array'),taille,Colour('Array'),options);
 
-xlabel(Xlabel);
-ylabel(Ylabel);
+xlabel(X('Description'));
+ylabel(Y('Description'));
 
 hcb = colorbar;
-title(hcb,Colorlabel)
+title(hcb,Colour('Description'));
 
-if filename ~= ""
+F = "%s%s_%s";
+filename = sprintf(F,X('Name'),Y('Name'),Colour('Name'));
+
+if save
     
     Fpng = "CR/images/%s.png";
     Feps = "CR/images/%s.eps";
@@ -20,4 +23,3 @@ if filename ~= ""
     saveas(fig,sprintf(Feps,filename));
 
 end
-
