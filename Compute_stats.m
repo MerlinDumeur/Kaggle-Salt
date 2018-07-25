@@ -28,7 +28,13 @@ for i = 1:length(depths.id)
     end
     
     im2D = im(:,:,1);
-    imD = im2double(im2D);
+%     imD = im2double(im2D);
+
+    counts = imhist(im2D,20);
+    
+    depths.Hist(i) = counts;
+
+%     depths.Entropy(i) = entropy(im2D);
     
 %     resp = imfilter(imD,lap,'conv');
 %     depths.Lap_std(i) = std2(resp);
@@ -39,16 +45,16 @@ for i = 1:length(depths.id)
     
 end
 
-for i = 1:length(train.id)
+% for i = 1:length(train.id)
 % 
-    mask = imread(sprintf(filenameMask,train.id{i}));
+%     mask = imread(sprintf(filenameMask,train.id{i}));
 % 
 % 
-    mask2D = mask(:,:,1);
-    maskD = im2double(mask2D);
-    
-    resp = imfilter(maskD,lap,'conv');
-    
+%     mask2D = mask(:,:,1);
+%     maskD = im2double(mask2D);
+%     
+%     resp = imfilter(maskD,lap,'conv');
+%     
 %     
 %     depths.Mask_lmean(train.id{i}) = mean2(resp);
 %     depths.Mask_lstd(train.id{i}) = std2(resp);
@@ -56,7 +62,7 @@ for i = 1:length(train.id)
 %     depths.Mask_mean(train.id{i}) = mean2(mask);
 %     depths.Mask_std(train.id{i}) = std2(mask);
     
-end
+% end
 
 save('depths.mat','depths');
 save('train.mat','train');
