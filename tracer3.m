@@ -1,10 +1,30 @@
-function fig = tracer3(X,Y,Z,Colour,taille,save,options)
+function fig = tracer3(X,Y,Z,Colour,taille,save,idx,options)
 %TRACER3 Plots 3D scatterplot
 %   
 
 fig = figure('pos',[0 0 1920 1080]);
 
-scatter3(X('Array'),Y('Array'),Z('Array'),taille,Colour('Array'),options);
+Xa = X('Array');
+Ya = Y('Array');
+Za = Z('Array');
+
+Colourscheme = ['r.' 'g.' 'b.' 'y.' 'm.' 'c.' 'rx' 'gx' 'bx' 'yx' 'mx' 'cx'];
+
+if max(idx) > 1
+    
+    hold on
+    
+    for i=1:max(idx)
+
+        scatter3(Xa(idx==i),Ya(idx==i),Za(idx==i),Colourscheme(i));
+        
+    end
+    
+    hold off
+    
+else
+    scatter3(Xa,Ya,Za,taille,Colour('Array'),options);
+end
 
 xlabel(X('Description'));
 ylabel(Y('Description'));

@@ -11,6 +11,8 @@ keyset = {'Array','Name','Description'};
 % Lm_array = depths.Lap_mean(id);
 % Ls_array = depths.Lap_std(id);
 % Earray = depths.Entropy(id);
+p00array = depths.p00(id);
+p11array = depths.p11(id);
 
 % M_m_array = depths.Mask_mean(id);
 % M_s_array = depths.Mask_std(id);

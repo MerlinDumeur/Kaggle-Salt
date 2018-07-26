@@ -1,4 +1,4 @@
-function [Components,coeffs,explained] = ACP(X,n)
+function [Components,score,coeffs,explained] = ACP(X,n)
 %ACP Summary of this function goes here
 %   Detailed explanation goes here
 

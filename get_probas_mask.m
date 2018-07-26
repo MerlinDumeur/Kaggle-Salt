@@ -19,12 +19,26 @@ X1a = X1(1:n-1);
     
 X00 = X0a .* X0b;
 X11 = X1a .* X1b;
+
+if sum(X1(1:n-1)) == 0
+    p11 = 0;
     
-p00 = sum(X00)/sum(X0(1:n-1));
-p11 = sum(X11)/sum(X1(1:n-1));
+else
+    p11 = sum(X11)/sum(X1(1:n-1));
     
-A = [p00 (1-p00)
-    (1-p11) p11];
+end
+
+if sum(X0(1:n-1)) == 0
+    
+    p00 = 0;
+    
+else
+    p00 = sum(X00)/sum(X0(1:n-1));
+    
+end
+
+    
+A = [p00 p11];
 
 end
 
