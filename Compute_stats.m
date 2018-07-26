@@ -12,6 +12,10 @@ n = length(depths.id);
 % depths.IsTrain = zeros(n,1);
 % depths.IsTrain(train.id)=1;
 
+global hist_bins;
+hist_bins = 20;
+depths.Hist = zeros(22000,hist_bins);
+
 filenameTrain = 'train/images/%s.png';
 filenameTest = 'test/images/%s.png';
 filenameMask = 'train/masks/%s.png';
@@ -30,9 +34,9 @@ for i = 1:length(depths.id)
     im2D = im(:,:,1);
 %     imD = im2double(im2D);
 
-    counts = imhist(im2D,20);
+    counts = imhist(im2D,hist_bins);
     
-    depths.Hist(i) = counts;
+    depths.Hist(i,:) = counts;
 
 %     depths.Entropy(i) = entropy(im2D);
     

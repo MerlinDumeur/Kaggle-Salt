@@ -1,11 +1,7 @@
-function [X,m]=Im2chaine(image)
+function [X]=Im2chaine(image2D)
 
-[m,n]=size(image);
+load peano_coord_cell.mat K
 
-[a,b]=peano(m);
+X = arrayfun(@(x) image2D(x{1}(1),x{1}(2)),K);
 
-for i=1:m
-    for j=1:m
-        X(j+(i-1)*m)=Xr(a(j+(i-1)*m),b(j+(i-1)*m));
-    end
 end
