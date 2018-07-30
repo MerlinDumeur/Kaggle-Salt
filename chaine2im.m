@@ -6,6 +6,7 @@ load peano_coord_cell.mat K
 
 s = size(chaine);
 n = sqrt(s(1));
+disp(n);
 image = zeros(n,'uint8');
 
 for i=1:s(1)

@@ -16,14 +16,16 @@ n = length(depths.id);
 % hist_bins = 20;
 % depths.Hist = zeros(22000,hist_bins);
 
-filenameTrain = 'train/images/%s.png';
 filenameTest = 'test/images/%s.png';
+filenameTrain = 'train/images/%s.png';
 filenameMask = 'train/masks/%s.png';
 
 % lap = [-1 -1 -1 ; -1 8 -1 ; -1 -1 -1];
 
-depths.p00 = zeros(22000,1);
-depths.p11 = zeros(22000,1);
+% depths.p00 = zeros(22000,1);
+% depths.p11 = zeros(22000,1);
+
+depths.p0 = zeros(22000,1);
 
 % 
 % for i = 1:length(depths.id)
@@ -60,11 +62,13 @@ for i = 1:length(train.id)
 % 
 % 
     mask2D = mask(:,:,1);
+
+    depths.p0(id) = double(mask2D(1,1) > 0);
     
-    A = get_probas_mask(mask2D);
+%     A = get_probas_mask(mask2D);
     
-    depths.p00(id) = A(1);
-    depths.p11(id) = A(2);
+%     depths.p00(id) = A(1);
+%     depths.p11(id) = A(2);
     
 %     maskD = im2double(mask2D);
 %     

@@ -11,7 +11,26 @@ if ~exist('n','var')
     
 end
 
-[coeffs,score,~,~,explained] = pca(X,'NumComponents',n);
+if n < 1
+    
+    [coeffs,score,~,~,explained] = pca(X,'NumComponents',s(2));
+    
+    i = 1;
+    
+    while sum(explained(1:i)) < n*100
+        
+       i = i+1;
+        
+    end
+    
+    n = i;
+    score = score(:,1:i);
+    
+else
+
+    [coeffs,score,~,~,explained] = pca(X,'NumComponents',n);
+
+end
 
 Components = cell(s(1),n);
 

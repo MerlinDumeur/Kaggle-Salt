@@ -10,6 +10,6 @@ s = size(im);
 
 
 
-%RLE = get_RLE(id,train);
-%m = RLE_to_mask(RLE,s(1),s(2));
-%R = Mask_to_RLE(m);
+RLE = get_RLE(id,train);
+m = RLE_to_mask(RLE,s(1),s(2));
+R = Mask_to_RLE(m);
