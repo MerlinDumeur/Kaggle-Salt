@@ -1,0 +1,48 @@
+AlexNet (2012)
+
+Architecture (4)
+	>ocal Response Normalization -> reduced error
+	>Overlapping Pooling -> reduced error, less overfitting
+
+Data augmentation (5-6)
+	>Extraction of smaller patches -> less overfitting
+	>PCA colour normalisation -> less overfitting (object invariant to illumination color/intensity)
+
+Dropout (6)
+	>Randomly setting half hidden neurons to 0 during training
+	>Reduces overfitting
+	>Iterations needed doubled
+
+Optimizer
+SGD
+batch size	: 128
+momentum 	: 0.9
+weight decay: 0.0005 -> important (reduces training error too)
+
+Weight initialisation : N(0,sigma^2) sigma = 0.01
+Initial bias : 1 in some conv layers and all FC layers, 0 in rest => Improves initial learning with positive values using ReLU
+
+Learning rate
+initial : 0.01
+decay : Division by 10 on plateau
+Termination on 4th plateau
+~=90 epochs
+
+Non-nn related models
+Sparse coding [2]
+SIFT + FVs [24,7] (FV = Fischer Vector)
+
+
+
+>Use atrous conv
+	>In UNET architecture (encoder-decoder)
+	>In deep architecture
+
+>Use batch norm
+
+>Use dropout
+
+>Use ResNET modules
+
+>Use inception modules (GCN paper) adapted to semantic segmentation
+	>Find paper on that
