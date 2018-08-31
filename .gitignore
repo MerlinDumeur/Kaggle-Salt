@@ -5,3 +5,7 @@ train/*
 *.asv
 .git
 CR/*
+u-net/*
+MATLAB/MAP_MPM/*
+papers/*
+MATLAB/res/*
