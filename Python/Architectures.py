@@ -1,0 +1,170 @@
+from keras.layers import Input,RepeatVector,Reshape
+from keras.layers.core import Lambda
+from keras.layers.convolutional import Conv2D, Conv2DTranspose, UpSampling2D
+from keras.layers.pooling import MaxPooling2D
+from keras.layers.merge import concatenate
+from keras.backend import tf as ktf
+
+from keras.models import Model, load_model
+from keras.utils import plot_model
+import Loss_functions
+
+
+class UNET:
+    
+    def __init__(self,model=None,**kwargs):
+        
+        if len(kwargs) > 0:
+            
+            self.model = UNET.from_parameters(**kwargs)
+            
+        else:
+        
+            self.model = model
+    
+    def from_parameters(n_features=1,IMG_HEIGHT=128,IMG_WIDTH=128,IMG_CHANNELS=1,start_numFilters=8,depth=5,use_features=True,model_filename=None,asc_mode=None):
+        
+        inputs = Input((IMG_HEIGHT,IMG_WIDTH,IMG_CHANNELS), name='img')
+        
+        if use_features:
+        
+            input_features = Input((n_features, ), name='feat')
+        
+        last = Lambda(lambda x:x / 255)(inputs)
+        numFilters = start_numFilters
+        
+        conv_desc = []
+        
+        for i in range(depth):
+            
+            c,last = UNET.create_desc_layers(last,numFilters)
+            conv_desc.append(c)
+            
+            numFilters *= 2
+            
+        if use_features:
+            
+            last = UNET.create_feat_layers(last,IMG_HEIGHT,IMG_WIDTH,depth,input_features,n_features)
+            
+        conv_desc = conv_desc[::-1]
+        
+        for i in range(depth):
+            
+            if asc_mode == 'resize_conv':
+                
+                height = IMG_HEIGHT // (2**(depth - i))
+                width = IMG_WIDTH // (2**(depth - i))
+                last = UNET.create_asc_layers_resize_conv(last,conv_desc[i],numFilters,(height,width))
+                
+            else:
+                
+                last = UNET.create_asc_layers(last,conv_desc[i],numFilters)
+            
+            numFilters //= 2
+            
+        outputs = UNET.create_output_layers(last,numFilters)
+        
+        model = Model(inputs=[inputs,input_features], outputs=[outputs])
+        
+        return model
+    
+    def from_filename(filename,custom_objects,**kwargs):
+        
+        model = load_model(filename, custom_objects=custom_objects, **kwargs)
+
+        return UNET(model)
+        
+    def save_model(self,filename=None):
+        
+        if filename is None:
+            
+            if self.model_filename is None:
+                
+                raise ValueError('No filename specified')
+                
+            else:
+                
+                self.model.save(self.model_filename)
+                
+        else:
+            
+            self.model.save(filename)
+            
+    def load_model(self,filename=None):
+        
+        if filename is None:
+            
+            if self.model_filename is None:
+                
+                raise ValueError('No filename specified')
+                
+            else:
+                
+                self.model = load_model(filename, custom_objects={'mean_iou': Loss_functions.mean_iou})
+                
+    def save_weights(self,filename):
+        
+        self.model.save_weights(filename)
+        
+    def get_model(self):
+        
+        return self.model
+        
+    def plot_model(self,filename='model.png',**kwargs):
+        
+        plot_model(self.model, to_file=filename, **kwargs)
+        
+    def create_feat_layers(lastLayer,IMG_HEIGHT,IMG_WIDTH,depth,input_features,n_features):
+        
+        final_height = IMG_HEIGHT // (2**depth)
+        final_width = IMG_WIDTH // (2**depth)
+            
+        f_repeat = RepeatVector(final_height * final_width)(input_features)
+        f_conv = Reshape((final_height, final_width, n_features))(f_repeat)
+        last = concatenate([lastLayer, f_conv], -1)
+        
+        return last
+        
+    def create_output_layers(lastLayer,numFilters,filterSize=(3,3),activation='relu',padding='same',activation_output='sigmoid'):
+        
+        last = Conv2D(numFilters, (3, 3), activation=activation, padding=padding)(lastLayer)
+        last = Conv2D(numFilters, (3, 3), activation=activation, padding=padding)(last)
+
+        outputs = Conv2D(1, (1, 1), activation='sigmoid')(last)
+        
+        return outputs
+        
+    def create_desc_layers(startLayer,numFilters,filtersize=(3,3),activation='relu',padding='same'):
+    
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+        p = MaxPooling2D((2, 2))(c)
+
+        return (c,p)
+
+    def create_asc_layers(startLayer,concatLayer,numFilters,filtersize=(3,3),activation='relu',padding='same',numFilters_tconv=None,filtersize_tconv=(2,2),stride_tconv=(2,2),padding_tconv='same'):
+    
+        if numFilters_tconv is None:
+
+            numFilters_tconv = numFilters // 2
+
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+
+        t = Conv2DTranspose(numFilters_tconv, filtersize_tconv, strides=stride_tconv, padding=padding_tconv)(c)
+        t = concatenate([t,concatLayer])
+    
+        return t
+    
+    def create_asc_layers_resize_conv(startLayer,concatLayer,numFilters,resize_size,filtersize=(3,3),activation='relu',padding='same',numFilters_conv=None,filterSize_conv=(3,3),padding_conv='same'):
+        
+        # if numFilters_conv is None:
+            
+        #     numFIlters_conv = numFilters // 2
+            
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+        
+        t = Lambda(lambda image: ktf.image.resize_images(image, resize_size))(c)
+        t = Conv2D(numFilters_conv, filterSize_conv, padding=padding_conv)(c)
+        t = concatenate([t,concatLayer])
