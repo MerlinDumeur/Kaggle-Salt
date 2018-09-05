@@ -9,3 +9,6 @@ u-net/*
 MATLAB/MAP_MPM/*
 papers/*
 MATLAB/res/*
+Python/*.gzip
+Python/*.hp5
+Python/__pycache__

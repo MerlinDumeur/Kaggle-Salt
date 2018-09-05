@@ -1,18 +1,22 @@
 from Constants import *
-
-DEPTHS_PATH = '../Kaggle-TGS/depths.csv'
-TRAIN_PATH = '../Kaggle-TGS/train.csv'
+import pandas as pd
+from tqdm import tqdm
+from skimage.io import imread
+from skimage.transform import resize
+import numpy as np
 
 
 def generate_dataframes(save=True):
 
-    df = pd.read_csv(DEPTHS_PATH,index_col=0,dtype={'z':'uint16'})
-    train_df = pd.read_csv(TRAIN_PATH,index_col=0,keep_default_na=False)
+    df = pd.read_csv(DEPTHS_CSV_PATH,index_col=0,dtype={'z':'uint16'})
+    train_df = pd.read_csv(TRAIN_CSV_PATH,index_col=0,keep_default_na=False)
 
-    df['image'] = [read_image(idx) for idx in tqdm_notebook(df.index)]
-    train_df['masks'] = [read_image(idx,True) for idx in tqdm_notebook(train_df.index)]
+    f = lambda x,mask:read_image(train_df,x,mask)
 
-    stratify(train_df)
+    df['image'] = [f(idx,False) for idx in tqdm(df.index)]
+    train_df['masks'] = [f(idx,True) for idx in tqdm(train_df.index)]
+
+    stratify_by_coverage(train_df)
 
     if save:
 
@@ -52,7 +56,7 @@ def stratify_by_coverage(train_df):
     # plt.show()
 
 
-def read_image(id_,mask=False):
+def read_image(train_df,id_,mask=False):
 
     path = (MASK_PATH if mask else TRAIN_PATH) if id_ in train_df.index.values else TEST_PATH
     

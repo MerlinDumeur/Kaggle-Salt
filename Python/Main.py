@@ -49,8 +49,8 @@ sns.set_style("white")
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 
-random.seed = seed
-np.random.seed = seed
+random.seed = SEED
+np.random.seed = SEED
 
 # df,train_df = Processing.generate_dataframes()
 
@@ -76,7 +76,7 @@ UNET_depth = [3,4,5]
 # UNET_dict = {'IMG_HEIGHT':UNET_height,'IMG_WIDTH':UNET_width,'IMG_CHANNELS':UNET_channels,'n_features':UNET_nfeatures,'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
 UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
 
-Arch_dict = {'UNET':[UNET,UNET_dict]}
+Arch_dict = {'UNET':[Architectures.UNET,UNET_dict]}
 
 M = Hyperparameters.Arch(Arch_dict)
 
@@ -104,7 +104,7 @@ Opt_dict = {'SGD':[SGD,SGD_dict],
             'Adam':[Adam,Adam_dict]
             }
 
-O = Optimizers(Opt_dict)
+O = Hyperparameters.Optimizers(Opt_dict)
 
 default_IDG = {k:v[0] for k,v in IDG_dict.items()}
 default_IDG['augment'] = ImageDataGenerator
@@ -118,6 +118,6 @@ default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNE
 
 plan = [{'arch':M}]
 
-t = Testing.Trainer(plan,default_parameters)
+t = Testing.Trainer(default_parameters)
 
-t.execute(ds,directory='gridsearch/')
+t.execute(plan,ds,directory='gridsearch/')

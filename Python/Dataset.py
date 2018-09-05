@@ -1,4 +1,5 @@
 from sklearn.model_selection import train_test_split, StratifiedShuffleSplit
+import numpy as np
 
 
 class Dataset:

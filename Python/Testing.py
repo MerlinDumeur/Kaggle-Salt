@@ -3,6 +3,8 @@ from itertools import product
 import psutil
 import time
 import Loss_functions
+import numpy as np
+import pandas as pd
 
 
 class Trainer:
@@ -105,7 +107,7 @@ class Trainer:
                         print('oom')
                         v = self.default_parameters['augment']
                         self.defaults['augment'] = v['augment'](**{l:w for l,w in v.items() if l != 'augment'})
-                        print(psutil.virtual_memorytual_memory().percent)
+                        print(psutil.virtual_memory().percent)
                     
                     parameters['augment'].fit(X_train)
                     gen_flow = parameters['augment'].flow((X_train,X_feat_train),Y_train,batch_size=batch_size)
