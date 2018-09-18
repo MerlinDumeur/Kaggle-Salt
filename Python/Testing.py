@@ -24,7 +24,7 @@ class Trainer:
         print(self.defaults)
         self.defaults['arch'].save_weights('weights_default.hp5')
         
-    def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=5):
+    def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=5,update_best_para=False):
 
         n = len(plan)
         
@@ -68,6 +68,11 @@ class Trainer:
         
                 # names_dict = copy.deepcopy(self.defaults_names)
                 names_dict = {k:v for k,v in self.defaults_names.items() if k in defaults}
+
+                if update_best_para:
+
+                    new_best_parameters = {k:v for k,v in self.defaults.items() if k in self.default_parameters}
+                    best_loss = np.inf
                 
                 for k in keys:
                     
@@ -150,6 +155,19 @@ class Trainer:
                 line[f'final_lr'] = final_lr_list
                 line[f'number_epochs'] = number_epochs_list
 
+                if update_best_para:
+
+                    last_loss = np.mean(min_val_loss_list)
+
+                    if last_loss < best_loss:
+
+                        best_loss = last_loss
+
+                        for k in keys:
+
+                            new_best_parameters[k] = pdf.loc[j,pdf.columns.difference([k + '_name',k])].dropna().to_dict()
+
+
 #                 print(line.memory_usage())
 #                 print(df_temp.memory_usage())
                 
@@ -158,6 +176,10 @@ class Trainer:
                 df_temp = df_temp.append(line,ignore_index=True)
                 
 #                 print(df_temp)
+
+            if update_best_para:
+
+                self.default_parameters = new_best_parameters
                 
             df_temp.to_pickle(directory + f'temp{i}.pkl')
             print(f"Done test {i+1}-{j+1} : {name}")
