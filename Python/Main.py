@@ -72,9 +72,11 @@ A = Hyperparameters.Augmentation(Augment_dict)
 # UNET_nfeatures = [1]
 UNET_startNumFilters = [4,8,16]
 UNET_depth = [3,4,5]
+UNET_batchnorm = [True,False]
+UNET_dropout = [None,0.1,0.3,0.5]
 
 # UNET_dict = {'IMG_HEIGHT':UNET_height,'IMG_WIDTH':UNET_width,'IMG_CHANNELS':UNET_channels,'n_features':UNET_nfeatures,'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
-UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
+UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth,'batch_norm':UNET_batchnorm,'dropout':UNET_dropout}
 
 Arch_dict = {'UNET':[Architectures.UNET,UNET_dict]}
 
@@ -116,8 +118,8 @@ default_opt = {'opt':Adam,'lr':0.001,'beta_1':0.8,'beta_2':0.999,'decay':0,'amsg
 
 default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNET}
 
-plan = [{'arch':M}]
+plan = [{'opt':O}]
 
 t = Testing.Trainer(default_parameters)
 
-t.execute(plan,ds,directory='gridsearch/')
+t.execute(plan,ds,directory='gridsearch2/')

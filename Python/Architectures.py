@@ -1,5 +1,5 @@
-from keras.layers import Input,RepeatVector,Reshape
-from keras.layers.core import Lambda
+from keras.layers import Input,RepeatVector,Reshape, BatchNormalization
+from keras.layers.core import Lambda, Dropout
 from keras.layers.convolutional import Conv2D, Conv2DTranspose, UpSampling2D
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.merge import concatenate
@@ -22,9 +22,30 @@ class UNET:
         
             self.model = model
     
-    def from_parameters(n_features=1,IMG_HEIGHT=128,IMG_WIDTH=128,IMG_CHANNELS=1,start_numFilters=8,depth=5,use_features=True,model_filename=None,asc_mode=None):
+    def from_parameters(n_features=1,IMG_HEIGHT=128,IMG_WIDTH=128,IMG_CHANNELS=1,start_numFilters=8,depth=5,use_features=True,model_filename=None,asc_mode=None,dropout=None,batch_norm=False):
         
         inputs = Input((IMG_HEIGHT,IMG_WIDTH,IMG_CHANNELS), name='img')
+
+        if dropout is not None:
+
+            if isinstance(dropout,collections.Mapping):
+
+                dropout_desc = dropout.get('desc',None)
+                dropout_asc = dropout.get('asc',None)
+                dropout_final = dropout.get('final',None)
+
+            else:
+
+                dropout_desc = dropout_asc = dropout_final = dropout
+
+        if isinstance(batch_norm,collections.Mapping):
+
+            batchn_desc = batch_norm.get('desc',False)
+            batchn_asc = batch_norm.get('asc',False)
+
+        else:
+
+            batchn_desc = batchn_asc = batch_norm
         
         if use_features:
         
@@ -37,7 +58,7 @@ class UNET:
         
         for i in range(depth):
             
-            c,last = UNET.create_desc_layers(last,numFilters)
+            c,last = UNET.create_desc_layers(last,numFilters,dropout_desc,batchn_desc)
             conv_desc.append(c)
             
             numFilters *= 2
@@ -54,15 +75,15 @@ class UNET:
                 
                 height = IMG_HEIGHT // (2**(depth - i))
                 width = IMG_WIDTH // (2**(depth - i))
-                last = UNET.create_asc_layers_resize_conv(last,conv_desc[i],numFilters,(height,width))
+                last = UNET.create_asc_layers_resize_conv(last,conv_desc[i],numFilters,(height,width),dropout_asc,batchn_asc)
                 
             else:
                 
-                last = UNET.create_asc_layers(last,conv_desc[i],numFilters)
+                last = UNET.create_asc_layers(last,conv_desc[i],numFilters,dropout_asc,batchn_asc)
             
             numFilters //= 2
             
-        outputs = UNET.create_output_layers(last,numFilters)
+        outputs = UNET.create_output_layers(last,numFilters,dropout_final)
         
         model = Model(inputs=[inputs,input_features], outputs=[outputs])
         
@@ -125,46 +146,107 @@ class UNET:
         
         return last
         
-    def create_output_layers(lastLayer,numFilters,filterSize=(3,3),activation='relu',padding='same',activation_output='sigmoid'):
-        
+    def create_output_layers(lastLayer,numFilters,dropout,filterSize=(3,3),activation='relu',padding='same',activation_output='sigmoid'):
+
         last = Conv2D(numFilters, (3, 3), activation=activation, padding=padding)(lastLayer)
         last = Conv2D(numFilters, (3, 3), activation=activation, padding=padding)(last)
+
+        if dropout is not None:
+
+            c = Dropout(dropout,seed=SEED)
 
         outputs = Conv2D(1, (1, 1), activation='sigmoid')(last)
         
         return outputs
         
-    def create_desc_layers(startLayer,numFilters,filtersize=(3,3),activation='relu',padding='same'):
-    
+    def create_desc_layers(startLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same'):
+            
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
+        if dropout is not None:
+
+            c = Dropout(dropout,seed=SEED)
+
         p = MaxPooling2D((2, 2))(c)
 
         return (c,p)
 
-    def create_asc_layers(startLayer,concatLayer,numFilters,filtersize=(3,3),activation='relu',padding='same',numFilters_tconv=None,filtersize_tconv=(2,2),stride_tconv=(2,2),padding_tconv='same'):
+    def create_asc_layers(startLayer,concatLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_tconv=None,filtersize_tconv=(2,2),stride_tconv=(2,2),padding_tconv='same'):
     
         if numFilters_tconv is None:
 
             numFilters_tconv = numFilters // 2
 
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
+        if dropout is not None:
+
+            c = Dropout(dropout,seed=SEED)
 
         t = Conv2DTranspose(numFilters_tconv, filtersize_tconv, strides=stride_tconv, padding=padding_tconv)(c)
         t = concatenate([t,concatLayer])
     
         return t
     
-    def create_asc_layers_resize_conv(startLayer,concatLayer,numFilters,resize_size,filtersize=(3,3),activation='relu',padding='same',numFilters_conv=None,filterSize_conv=(3,3),padding_conv='same'):
+    def create_asc_layers_resize_conv(startLayer,concatLayer,numFilters,resize_size,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_conv=None,filterSize_conv=(3,3),padding_conv='same'):
         
         # if numFilters_conv is None:
             
         #     numFIlters_conv = numFilters // 2
             
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
         c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+
+        if batch_norm:
+
+            c = BatchNormalization()(c)
+
+        if dropout is not None:
+
+            c = Dropout(dropout,seed=SEED)
         
         t = Lambda(lambda image: ktf.image.resize_images(image, resize_size))(c)
         t = Conv2D(numFilters_conv, filterSize_conv, padding=padding_conv)(c)
         t = concatenate([t,concatLayer])
+
+
+class ATROUS:
+
+    def __init__(self,model=None,**kwargs):
+
+        if len(kwargs) > 0:
+            
+            self.model = ATROUS.from_parameters(**kwargs)
+            
+        else:
+        
+            self.model = model
+
+    def from_parameters():
+
+#        TODO : GENERATE ATROUS NETWORK FROM PARAMETERS

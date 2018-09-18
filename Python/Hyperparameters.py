@@ -80,4 +80,4 @@ class Optimizers(Hyperparameter):
             'Nadam':'NAD'
         }
         
-        self.df_opt = Hyperparameter.generate_final_param_dataframe(opt_dict,name_convention=opt_names_dict,class_type='opt')
+        self.df = Hyperparameter.generate_final_param_dataframe(opt_dict,name_convention=opt_names_dict,class_type='opt')
