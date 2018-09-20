@@ -111,15 +111,19 @@ O = Hyperparameters.Optimizers(Opt_dict)
 default_IDG = {k:v[0] for k,v in IDG_dict.items()}
 default_IDG['augment'] = ImageDataGenerator
 
-default_UNET = {k:v[0] for k,v in UNET_dict.items()}
-default_UNET['arch'] = Architectures.UNET
+# default_UNET = {k:v[0] for k,v in UNET_dict.items()}
+# default_UNET['arch'] = Architectures.UNET
+
+default_UNET = {'arch':Architectures.UNET,'start_numFilters':8,'depth':4,'batch_norm':False,'dropout':None}
 
 default_opt = {'opt':Adam,'lr':0.001,'beta_1':0.8,'beta_2':0.999,'decay':0,'amsgrad':False}
 
 default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNET}
 
-plan = [{'opt':O}]
+plan = [{'arch':M},{'opt':O}]
 
 t = Testing.Trainer(default_parameters)
 
-t.execute(plan,ds,directory='gridsearch2/')
+print('Variables intialized')
+
+t.execute(plan,ds,directory='gridsearch/',update_best_para=True)

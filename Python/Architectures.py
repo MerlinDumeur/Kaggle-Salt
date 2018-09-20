@@ -3,10 +3,16 @@ from keras.layers.core import Lambda, Dropout
 from keras.layers.convolutional import Conv2D, Conv2DTranspose, UpSampling2D
 from keras.layers.pooling import MaxPooling2D
 from keras.layers.merge import concatenate
-from keras.backend import tf as ktf
 
 from keras.models import Model, load_model
+
+from keras.backend import tf as ktf
 from keras.utils import plot_model
+
+import Constants
+
+import collections
+
 import Loss_functions
 
 
@@ -26,17 +32,15 @@ class UNET:
         
         inputs = Input((IMG_HEIGHT,IMG_WIDTH,IMG_CHANNELS), name='img')
 
-        if dropout is not None:
+        if isinstance(dropout,collections.Mapping):
 
-            if isinstance(dropout,collections.Mapping):
+            dropout_desc = dropout.get('desc',None)
+            dropout_asc = dropout.get('asc',None)
+            dropout_final = dropout.get('final',None)
 
-                dropout_desc = dropout.get('desc',None)
-                dropout_asc = dropout.get('asc',None)
-                dropout_final = dropout.get('final',None)
+        else:
 
-            else:
-
-                dropout_desc = dropout_asc = dropout_final = dropout
+            dropout_desc = dropout_asc = dropout_final = dropout
 
         if isinstance(batch_norm,collections.Mapping):
 
@@ -153,7 +157,7 @@ class UNET:
 
         if dropout is not None:
 
-            c = Dropout(dropout,seed=SEED)
+            last = Dropout(dropout,seed=Constants.SEED)(last)
 
         outputs = Conv2D(1, (1, 1), activation='sigmoid')(last)
         
@@ -175,7 +179,7 @@ class UNET:
 
         if dropout is not None:
 
-            c = Dropout(dropout,seed=SEED)
+            c = Dropout(dropout,seed=Constants.SEED)(c)
 
         p = MaxPooling2D((2, 2))(c)
 
@@ -201,7 +205,7 @@ class UNET:
 
         if dropout is not None:
 
-            c = Dropout(dropout,seed=SEED)
+            c = Dropout(dropout,seed=Constants.SEED)(c)
 
         t = Conv2DTranspose(numFilters_tconv, filtersize_tconv, strides=stride_tconv, padding=padding_tconv)(c)
         t = concatenate([t,concatLayer])
@@ -228,7 +232,7 @@ class UNET:
 
         if dropout is not None:
 
-            c = Dropout(dropout,seed=SEED)
+            c = Dropout(dropout,seed=Constants.SEED)(c)
         
         t = Lambda(lambda image: ktf.image.resize_images(image, resize_size))(c)
         t = Conv2D(numFilters_conv, filterSize_conv, padding=padding_conv)(c)
@@ -250,3 +254,4 @@ class ATROUS:
     def from_parameters():
 
 #        TODO : GENERATE ATROUS NETWORK FROM PARAMETERS
+        NOTHING_TO_SEE_HERE = 42

@@ -4,7 +4,8 @@ import psutil
 import time
 import Loss_functions
 import numpy as np
-import pandas as pd
+import pandas as 
+from matplotlib import pyplot as plt
 
 
 class Trainer:
@@ -24,7 +25,7 @@ class Trainer:
         print(self.defaults)
         self.defaults['arch'].save_weights('weights_default.hp5')
         
-    def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=5,update_best_para=False):
+    def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=1,update_best_para=False):
 
         n = len(plan)
         
@@ -36,6 +37,8 @@ class Trainer:
         #                       names=[u'plans', u'id'])
         
         df_temp_list = []
+
+        memory_used = []
         
         for i in range(n):
             
@@ -60,6 +63,8 @@ class Trainer:
             params_df = {k:plan[i][k].get_df() for k in keys}
             
             for j in range(len(index[0])):
+
+                print(f'beginning parameter combination {j}')
                 
                 # index_dict = {keys[i]:index[i][j] for i in range(len(keys))}
                 
@@ -112,10 +117,9 @@ class Trainer:
                         print('oom')
                         v = self.default_parameters['augment']
                         self.defaults['augment'] = v['augment'](**{l:w for l,w in v.items() if l != 'augment'})
-                        print(psutil.virtual_memory().percent)
                     
                     parameters['augment'].fit(X_train)
-                    gen_flow = parameters['augment'].flow((X_train,X_feat_train),Y_train,batch_size=batch_size)
+                    # gen_flow = parameters['augment'].flow((X_train,X_feat_train),Y_train,batch_size=batch_size)
                 
 #                   checkpointer = ModelCheckpoint(filename, verbose=0, save_best_only=True)
                 
@@ -131,10 +135,11 @@ class Trainer:
                         model.load_weights('weights_default.hp5')
                 
                     model.compile(optimizer=parameters['opt'], loss='binary_crossentropy', metrics=[Loss_functions.mean_iou])
-                    results = model.fit_generator(gen_flow, verbose=0,validation_data=([X_val, X_feat_val], Y_val),steps_per_epoch=3600 // batch_size, epochs=100, callbacks=[reduceLR, earlystopper],shuffle=True,workers=1,use_multiprocessing=False,max_queue_size=2)
+                    results = model.fit_generator(parameters['augment'].flow((X_train,X_feat_train),Y_train,batch_size=batch_size), verbose=2,validation_data=([X_val, X_feat_val], Y_val),steps_per_epoch=3600 // batch_size, epochs=100, callbacks=[reduceLR, earlystopper],shuffle=True,workers=1,use_multiprocessing=False,max_queue_size=3)
                 
                     cpu_time_list.append(time.clock() - cpu_time)
-                    
+                    memory_used.append(psutil.virtual_memory().percent)
+
                 
 #                     model.save(filename)
                 
@@ -185,6 +190,9 @@ class Trainer:
             print(f"Done test {i+1}-{j+1} : {name}")
                 
             df_temp_list.append(df_temp)
+
+        plt.plot(range(len(memory_used)),memory_used)
+        plt.savefig('plot.png')
             
         df_record = pd.concat(df_temp_list, keys=[f"step {i+1}" for i in range(n)])
         
