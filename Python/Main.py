@@ -34,6 +34,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam, SGD
 # , RMSprop, Adagrad, Adamax, Adadelta, Nadam
 # from keras_preprocessing.image import NumpyArrayIterator
+import multiprocessing
 
 # import tensorflow as tf
 
@@ -49,7 +50,7 @@ sns.set_style("white")
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 
-random.seed = SEED
+# random.seed = SEED
 np.random.seed = SEED
 
 # df,train_df = Processing.generate_dataframes()
@@ -65,6 +66,8 @@ IDG_dict = {'vertical_flip':IDG_fliplr}
 Augment_dict = {'IDG':[ImageDataGenerator,IDG_dict]}
 
 A = Hyperparameters.Augmentation(Augment_dict)
+
+m = multiprocessing.Manager()
 
 # UNET_height = [128]
 # UNET_width = [128]
