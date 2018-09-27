@@ -2,6 +2,14 @@ import tensorflow as tf
 from keras import backend as K
 import numpy as np
 
+# conf = tf.ConfigProto(device_count = {'GPU':0})
+# conf = tf.ConfigProto(device_count = {'GPU':0})
+# conf.gpu_options.per_process_gpu_memory_fraction = 0.1
+# conf.gpu_options.visible_device_list = ""
+# conf.device_count = {'GPU':0,'CPU':1}
+# session = tf.Session(config=conf)
+# K.set_session(session)
+
 
 def mean_iou(y_true, y_pred):
 

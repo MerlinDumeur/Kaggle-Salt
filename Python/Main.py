@@ -34,6 +34,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam, SGD
 # , RMSprop, Adagrad, Adamax, Adadelta, Nadam
 # from keras_preprocessing.image import NumpyArrayIterator
+import multiprocessing
 
 # import tensorflow as tf
 
@@ -49,7 +50,7 @@ sns.set_style("white")
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 
-random.seed = SEED
+# random.seed = SEED
 np.random.seed = SEED
 
 # df,train_df = Processing.generate_dataframes()
@@ -65,6 +66,8 @@ IDG_dict = {'vertical_flip':IDG_fliplr}
 Augment_dict = {'IDG':[ImageDataGenerator,IDG_dict]}
 
 A = Hyperparameters.Augmentation(Augment_dict)
+
+m = multiprocessing.Manager()
 
 # UNET_height = [128]
 # UNET_width = [128]
@@ -114,16 +117,27 @@ default_IDG['augment'] = ImageDataGenerator
 # default_UNET = {k:v[0] for k,v in UNET_dict.items()}
 # default_UNET['arch'] = Architectures.UNET
 
-default_UNET = {'arch':Architectures.UNET,'start_numFilters':8,'depth':4,'batch_norm':False,'dropout':None}
+default_UNET = {'arch':Architectures.UNET,'start_numFilters':32,'depth':5,'batch_norm':True,'dropout':None}
+
+# short_UNET = {k:[v] for k,v in default_UNET.items()}
+short_UNET = {'start_numFilters':[32],'depth':[5],'batch_norm':[True],'dropout':[None]}
+Arch_dict = {'UNET':[Architectures.UNET,short_UNET]}
+SM = Hyperparameters.Arch(Arch_dict)
 
 default_opt = {'opt':Adam,'lr':0.001,'beta_1':0.8,'beta_2':0.999,'decay':0,'amsgrad':False}
 
+short_opt = {k:[v] for k,v in default_opt.items() if k != 'opt'}
+Opt_dict = {'Adam':[Adam,short_opt]}
+SO = Hyperparameters.Optimizers(Opt_dict)
+
 default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNET}
 
-plan = [{'arch':M},{'opt':O}]
+# plan = [{'arch':M},{'opt':O}]
+plan = [{'arch':SM},{'opt':O}]
+# plan = [{'opt':O}]
 
 t = Testing.Trainer(default_parameters)
 
 print('Variables intialized')
 
-t.execute(plan,ds,directory='gridsearch/',update_best_para=True)
+t.execute(plan,ds,directory='gridsearch2/',update_best_para=True,resume=True)

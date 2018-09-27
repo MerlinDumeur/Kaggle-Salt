@@ -11,6 +11,7 @@ class Hyperparameter:
             
             name = class_ref.__name__
         
+        print(*parameters_dict.values())
         prod = product(*parameters_dict.values())
         a = np.array([*prod])
         data = {[*parameters_dict][i]:a[:,i] for i in range(len(parameters_dict))}
