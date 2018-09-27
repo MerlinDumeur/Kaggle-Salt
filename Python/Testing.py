@@ -30,11 +30,53 @@ class Trainer:
         
     def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=1,update_best_para=False,resume=False):
 
+        if update_best_para:
+
+            new_best_parameters = {k:v for k,v in self.defaults.items() if k in self.default_parameters}
+            best_loss = np.inf
+
         if resume:
 
             files = [f for f in os.listdir(directory)]
 
             start_i = max(len(files) - 1,0)
+
+            if update_best_para:
+
+                for i in range(start_i):
+
+                    df = pd.read_pickle(directory + f'temp{i}.pkl')
+
+                    df['mean_val_loss'] = df['mean_val_loss'].apply(np.mean)
+                    
+                    idmin = df['mean_val_loss'].idxmin()
+
+                    keys = [*plan[i]]
+
+                    if df.loc[idmin,'mean_val_loss'] < best_loss:
+
+                        dfs = [P.get_df() for P in plan[i].values()]
+            
+                    if len(keys) == 1:
+                        
+                        index = [np.arange(len(dfs[0]))]
+                        
+                    else:
+                        
+                        lengths = [len(df) for df in dfs]
+
+                        a = np.array([*product(*lengths)])
+                        index = [a[:,i] for i in range(a.shape[1])]
+
+                    index_dict = {keys[k]:index[k][idmin] for k in range(len(keys))}
+
+                    for k,pdf in zip([*plan[i]],dfs):
+
+                        idmin_k = index_dict[k]
+                        self.default_parameters[k] = pdf.loc[idmin_k,pdf.columns.difference([k + '_name',k])].dropna().to_dict()
+                        self.default_parameters[k][k] = pdf.loc[idmin_k,k]
+
+
 
         else:
 
@@ -71,7 +113,7 @@ class Trainer:
             print(f"step {i}")
             
             keys = [*plan[i]]
-            defaults = [k for k in self.expected_parameters if k not in keys]
+            # defaults = [k for k in self.expected_parameters if k not in keys]
             
             dfs = [P.get_df() for P in plan[i].values()]
             
@@ -91,40 +133,38 @@ class Trainer:
             params_df = {k:plan[i][k].get_df() for k in keys}
             print(len(params_df))
 
-            if start_j == len(index[0]):
+            # if start_j == len(index[0]):
 
-                bypass_first_time = True
+            #     bypass_first_time = True
 
-            else:
+            # else:
 
-                bypass_first_time = False
+            #     bypass_first_time = False
+
+            bypass_first_time = start_j == len(index[0])
             
             for j in range(start_j,len(index[0])):
 
                 print(f'beginning parameter combination {j}')
                 
-                # index_dict = {keys[i]:index[i][j] for i in range(len(keys))}
+                index_dict = {keys[k]:index[k][j] for k in range(len(keys))}
                 
                 # parameters = copy.deepcopy(self.defaults)
                 parameters = {k:v for k,v in self.defaults.items() if k in defaults}
         
                 # names_dict = copy.deepcopy(self.defaults_names)
                 names_dict = {k:v for k,v in self.defaults_names.items() if k in defaults}
-
-                # if update_best_para:
-
-                #     new_best_parameters = {k:v for k,v in self.defaults.items() if k in self.default_parameters}
-                #     best_loss = np.inf
                 
                 for k in keys:
                     
                     pdf = params_df[k]
-                    param = pdf.loc[j,k]
+                    idx = index_dict[k]
+                    param = pdf.loc[idx,k]
 
                     # x = pdf.loc[j,pdf.columns.difference([k+'_name',k])].dropna().to_dict()
         
-                    parameters[k] = param(**pdf.loc[j,pdf.columns.difference([k + '_name',k])].dropna().to_dict())
-                    names_dict[k] = pdf.loc[j,k + '_name']
+                    parameters[k] = param(**pdf.loc[idx,pdf.columns.difference([k + '_name',k])].dropna().to_dict())
+                    names_dict[k] = pdf.loc[idx,k + '_name']
                 
                 name = ""
                 
@@ -135,7 +175,7 @@ class Trainer:
                 name = name[:-1]
                 # filename = directory + name + '.hp5'
                 
-                l = [params_df[e].loc[j] if e in keys else pd.Series(self.default_parameters[e]) for e in self.expected_parameters]
+                l = [params_df[e].loc[index_dict[e]] if e in keys else pd.Series(self.default_parameters[e]) for e in self.expected_parameters]
                 line = pd.concat(l)
 #                 line['name'] = name
 
@@ -200,37 +240,23 @@ class Trainer:
                         k = 'opt'
 
                         pdf = params_df[k]
-                        param = pdf.loc[j,k]
+                        param = pdf.loc[index_dict[k],k]
 
                         # x = pdf.loc[j,pdf.columns.difference([k+'_name',k])].dropna().to_dict()
         
-                        parameters[k] = param(**pdf.loc[j,pdf.columns.difference([k + '_name',k])].dropna().to_dict())
-                        names_dict[k] = pdf.loc[j,k + '_name']
+                        parameters[k] = param(**pdf.loc[index_dict[k],pdf.columns.difference([k + '_name',k])].dropna().to_dict())
+                        names_dict[k] = pdf.loc[index_dict[k],k + '_name']
 
                     else:
 
                         self.defaults['opt'] = Trainer.instanciate(self.default_parameters['opt'],'opt')
 
                 line[f'cpu_time'] = cpu_time_list
-                line[f'min_val_loss'] = min_val_loss_list
+                line[f'mean_val_loss'] = min_val_loss_list
                 line[f'mean_iou_of_min_val_loss'] = mean_iou_list
                 line[f'final_val_loss'] = final_val_loss_list
                 line[f'final_lr'] = final_lr_list
                 line[f'number_epochs'] = number_epochs_list
-
-                # if update_best_para:
-
-                #     last_loss = np.mean(min_val_loss_list)
-
-                #     if last_loss < best_loss:
-
-                #         best_loss = last_loss
-
-                #         for k in keys:
-
-                #             new_best_parameters[k] = pdf.loc[j,pdf.columns.difference([k + '_name',k])].dropna().to_dict()
-                #             new_best_parameters[k][k] = pdf.loc[j,k]
-
 
 #                 print(line.memory_usage())
 #                 print(df_temp.memory_usage())
@@ -243,10 +269,10 @@ class Trainer:
                 
 #                 print(df_temp)
 
-            # if update_best_para:
+            if update_best_para:
 
-            #     self.default_parameters = new_best_parameters
-            #     print(new_best_parameters)
+                self.default_parameters = new_best_parameters
+                print(new_best_parameters)
 
             print(self.default_parameters)
 
