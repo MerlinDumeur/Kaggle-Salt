@@ -30,6 +30,10 @@ class Trainer:
         
     def execute(self,plan,dataset,batch_size=16,directory="gridsearch/",n_splits=1,update_best_para=False,resume=False):
 
+        if not os.path.exists(directory):
+
+            os.mdkir(directory)
+
         if update_best_para:
 
             new_best_parameters = {k:v for k,v in self.defaults.items() if k in self.default_parameters}
