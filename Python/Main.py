@@ -73,10 +73,10 @@ m = multiprocessing.Manager()
 # UNET_width = [128]
 # UNET_channels = [1]
 # UNET_nfeatures = [1]
-UNET_startNumFilters = [4,8,16]
-UNET_depth = [3,4,5]
-UNET_batchnorm = [True,False]
-UNET_dropout = [None,0.1,0.3,0.5]
+UNET_startNumFilters = [16,32]
+UNET_depth = [4,5,6]
+UNET_batchnorm = [True]
+UNET_dropout = [None,0.1]
 
 # UNET_dict = {'IMG_HEIGHT':UNET_height,'IMG_WIDTH':UNET_width,'IMG_CHANNELS':UNET_channels,'n_features':UNET_nfeatures,'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
 UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth,'batch_norm':UNET_batchnorm,'dropout':UNET_dropout}
@@ -92,11 +92,18 @@ SGD_nesterov = [True,False]
 
 SGD_dict = {'lr':SGD_lr,'momentum':SGD_momentum,'decay':SGD_decay,'nesterov':SGD_nesterov}
 
-Adam_lr = np.logspace(-4,-2,3)
-Adam_beta1 = [0.8,0.9,0.99]
-Adam_beta2 = [0.999]
-Adam_decay = [0,0.01]
-Adam_amsgrad = [False,True]
+Adam_lr = np.logspace(-3,-2,2)
+Adam_beta1 = [0.85,0.9,0.95]
+Adam_beta2 = [0.999,0.9]
+Adam_decay = [0,0.1]
+Adam_amsgrad = [False]
+
+# Adam_dict = {'lr':Adam_lr,
+#              'beta_1':Adam_beta1,
+#              'beta_2':Adam_beta2,
+#              'decay':Adam_decay,
+#              'amsgrad':Adam_amsgrad
+#              }
 
 Adam_dict = {'lr':Adam_lr,
              'beta_1':Adam_beta1,
@@ -109,6 +116,9 @@ Opt_dict = {'SGD':[SGD,SGD_dict],
             'Adam':[Adam,Adam_dict]
             }
 
+Opt_dict = {'Adam':[Adam,Adam_dict]
+            }
+
 O = Hyperparameters.Optimizers(Opt_dict)
 
 default_IDG = {k:v[0] for k,v in IDG_dict.items()}
@@ -117,14 +127,14 @@ default_IDG['augment'] = ImageDataGenerator
 # default_UNET = {k:v[0] for k,v in UNET_dict.items()}
 # default_UNET['arch'] = Architectures.UNET
 
-default_UNET = {'arch':Architectures.UNET,'start_numFilters':32,'depth':5,'batch_norm':True,'dropout':None}
+default_UNET = {'arch':Architectures.UNET,'start_numFilters':16,'depth':5,'batch_norm':True,'dropout':None}
 
 # short_UNET = {k:[v] for k,v in default_UNET.items()}
 short_UNET = {'start_numFilters':[32],'depth':[5],'batch_norm':[True],'dropout':[None]}
 Arch_dict = {'UNET':[Architectures.UNET,short_UNET]}
 SM = Hyperparameters.Arch(Arch_dict)
 
-default_opt = {'opt':Adam,'lr':0.001,'beta_1':0.8,'beta_2':0.999,'decay':0,'amsgrad':False}
+default_opt = {'opt':Adam,'lr':0.001,'beta_1':0.9,'beta_2':0.999,'decay':0,'amsgrad':False}
 
 short_opt = {k:[v] for k,v in default_opt.items() if k != 'opt'}
 Opt_dict = {'Adam':[Adam,short_opt]}
@@ -133,11 +143,11 @@ SO = Hyperparameters.Optimizers(Opt_dict)
 default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNET}
 
 # plan = [{'arch':M},{'opt':O}]
-plan = [{'arch':SM},{'opt':O}]
-# plan = [{'opt':O}]
+# plan = [{'arch':SM},{'opt':O}]
+plan = [{'opt':O}]
 
 t = Testing.Trainer(default_parameters)
 
 print('Variables intialized')
 
-t.execute(plan,ds,directory='gridsearch2/',update_best_para=True,resume=True)
+t.execute(plan,ds,directory='gridsearch5/',update_best_para=True,resume=True)

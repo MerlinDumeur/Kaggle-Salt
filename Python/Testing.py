@@ -105,11 +105,12 @@ class Trainer:
 
             if resume and (i == start_i) and len(files) > 0:
 
-                df = pd.read_pickle(directory + f'temp{i}.pkl')
-                start_j = len(df.index)
+                df_temp = pd.read_pickle(directory + f'temp{i}.pkl')
+                start_j = len(df_temp.index)
 
             else:
 
+                df_temp = pd.DataFrame()
                 start_j = 0
 
             print(f"start_j = {start_j}")
@@ -131,8 +132,6 @@ class Trainer:
 
                 a = np.array([*product(*lengths)])
                 index = [a[:,i] for i in range(a.shape[1])]
-
-            df_temp = pd.DataFrame()
             
             params_df = {k:plan[i][k].get_df() for k in keys}
             print(len(params_df))
@@ -296,7 +295,7 @@ class Trainer:
             df_temp_list.append(df_temp)
 
         # plt.plot(range(len(memory_used)),memory_used)
-        plt.savefig('plot.png')
+        # plt.savefig('plot.png')
             
         df_record = pd.concat(df_temp_list, keys=[f"step {i+1}" for i in range(n)])
         
