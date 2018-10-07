@@ -6,9 +6,9 @@ train/*
 .git
 CR/*
 u-net/*
-MATLAB/MAP_MPM/*
 papers/*
 MATLAB/res/*
 Python/*.gzip
 Python/*.hp5
 Python/__pycache__
+MATLAB/MAP_MPM/*
