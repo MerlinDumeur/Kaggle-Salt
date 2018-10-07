@@ -28,7 +28,7 @@ class UNET:
         
             self.model = model
     
-    def from_parameters(n_features=1,IMG_HEIGHT=128,IMG_WIDTH=128,IMG_CHANNELS=1,start_numFilters=8,depth=5,use_features=True,model_filename=None,asc_mode=None,dropout=None,batch_norm=False):
+    def from_parameters(n_features=1,IMG_HEIGHT=128,IMG_WIDTH=128,IMG_CHANNELS=1,start_numFilters=8,depth=5,use_features=True,model_filename=None,asc_mode=None,dropout=None,batch_norm=False,dropout_mode='full',initializer='glorot_uniform'):
         
         inputs = Input((IMG_HEIGHT,IMG_WIDTH,IMG_CHANNELS), name='img')
 
@@ -37,6 +37,10 @@ class UNET:
             dropout_desc = dropout.get('desc',None)
             dropout_asc = dropout.get('asc',None)
             dropout_final = dropout.get('final',None)
+
+        elif dropout_mode == 'paper':
+
+            dropout_final = dropout_asc = None
 
         else:
 
@@ -62,7 +66,14 @@ class UNET:
         
         for i in range(depth):
             
-            c,last = UNET.create_desc_layers(last,numFilters,dropout_desc,batchn_desc)
+            if dropout_mode == 'paper' and i < depth - 1:
+
+                c,last = UNET.create_desc_layers(last,numFilters,None,batchn_desc)
+
+            else:
+                
+                c,last = UNET.create_desc_layers(last,numFilters,dropout_desc,batchn_desc)
+            
             conv_desc.append(c)
             
             numFilters *= 2
@@ -163,15 +174,15 @@ class UNET:
         
         return outputs
         
-    def create_desc_layers(startLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same'):
+    def create_desc_layers(startLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',initializer='glorot_uniform'):
             
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(startLayer)
         
         if batch_norm:
 
             c = BatchNormalization()(c)
 
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(c)
 
         if batch_norm:
 
@@ -185,19 +196,19 @@ class UNET:
 
         return (c,p)
 
-    def create_asc_layers(startLayer,concatLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_tconv=None,filtersize_tconv=(2,2),stride_tconv=(2,2),padding_tconv='same'):
+    def create_asc_layers(startLayer,concatLayer,numFilters,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_tconv=None,filtersize_tconv=(2,2),stride_tconv=(2,2),padding_tconv='same',initializer='glorot_uniform'):
     
         if numFilters_tconv is None:
 
             numFilters_tconv = numFilters // 2
 
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(startLayer)
 
         if batch_norm:
 
             c = BatchNormalization()(c)
 
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(c)
 
         if batch_norm:
 
@@ -207,24 +218,24 @@ class UNET:
 
             c = Dropout(dropout,seed=Constants.SEED)(c)
 
-        t = Conv2DTranspose(numFilters_tconv, filtersize_tconv, strides=stride_tconv, padding=padding_tconv)(c)
+        t = Conv2DTranspose(numFilters_tconv, filtersize_tconv, strides=stride_tconv, padding=padding_tconv, kernel_initializer=initializer)(c)
         t = concatenate([t,concatLayer])
     
         return t
     
-    def create_asc_layers_resize_conv(startLayer,concatLayer,numFilters,resize_size,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_conv=None,filterSize_conv=(3,3),padding_conv='same'):
+    def create_asc_layers_resize_conv(startLayer,concatLayer,numFilters,resize_size,dropout,batch_norm,filtersize=(3,3),activation='relu',padding='same',numFilters_conv=None,filterSize_conv=(3,3),padding_conv='same',initializer='glorot_uniform'):
         
         # if numFilters_conv is None:
             
         #     numFIlters_conv = numFilters // 2
             
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(startLayer)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(startLayer)
 
         if batch_norm:
 
             c = BatchNormalization()(c)
 
-        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding)(c)
+        c = Conv2D(numFilters, filtersize, activation=activation, padding=padding, kernel_initializer=initializer)(c)
 
         if batch_norm:
 
@@ -235,7 +246,7 @@ class UNET:
             c = Dropout(dropout,seed=Constants.SEED)(c)
         
         t = Lambda(lambda image: ktf.image.resize_images(image, resize_size))(c)
-        t = Conv2D(numFilters_conv, filterSize_conv, padding=padding_conv)(c)
+        t = Conv2D(numFilters_conv, filterSize_conv, padding=padding_conv, kernel_initializer=initializer)(c)
         t = concatenate([t,concatLayer])
 
 
