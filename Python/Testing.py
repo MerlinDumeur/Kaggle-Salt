@@ -32,7 +32,7 @@ class Trainer:
 
         if not os.path.exists(directory):
 
-            os.mdkir(directory)
+            os.mkdir(directory)
 
         if update_best_para:
 
@@ -118,7 +118,7 @@ class Trainer:
             print(f"step {i}")
             
             keys = [*plan[i]]
-            # defaults = [k for k in self.expected_parameters if k not in keys]
+            defaults = [k for k in self.expected_parameters if k not in keys]
             
             dfs = [P.get_df() for P in plan[i].values()]
             
@@ -232,7 +232,7 @@ class Trainer:
                     
                     number_epochs_list.append(len(results.epoch))
 
-                if 'arch' in keys:
+                if 'arch' in keys and psutil.virtual_memory().percent >= 80:
 
                     del model
                     K.clear_session()
@@ -274,7 +274,7 @@ class Trainer:
 
             if update_best_para:
 
-                self.default_parameters = new_best_parameters
+                self.defaults = new_best_parameters
                 print(new_best_parameters)
 
             print(self.default_parameters)

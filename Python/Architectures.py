@@ -41,6 +41,7 @@ class UNET:
         elif dropout_mode == 'paper':
 
             dropout_final = dropout_asc = None
+            dropout_desc = dropout
 
         else:
 

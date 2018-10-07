@@ -73,13 +73,15 @@ m = multiprocessing.Manager()
 # UNET_width = [128]
 # UNET_channels = [1]
 # UNET_nfeatures = [1]
-UNET_startNumFilters = [16,32]
-UNET_depth = [4,5,6]
+UNET_startNumFilters = [16]
+UNET_depth = [5]
 UNET_batchnorm = [True]
-UNET_dropout = [None,0.1]
+UNET_dropout = [None]
+UNET_dropout_mode = ['full']
+UNET_initializer = ['glorot_uniform','glorot_normal','lecun_uniform','lecun_normal','he_normal','he_uniform','Identity','Orthogonal','VarianceScaling','TruncatedNormal','RandomUniform','RandomNormal']
 
 # UNET_dict = {'IMG_HEIGHT':UNET_height,'IMG_WIDTH':UNET_width,'IMG_CHANNELS':UNET_channels,'n_features':UNET_nfeatures,'start_numFilters':UNET_startNumFilters,'depth':UNET_depth}
-UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth,'batch_norm':UNET_batchnorm,'dropout':UNET_dropout}
+UNET_dict = {'start_numFilters':UNET_startNumFilters,'depth':UNET_depth,'batch_norm':UNET_batchnorm,'dropout':UNET_dropout,'dropout_mode':UNET_dropout_mode,'initializer':UNET_initializer}
 
 Arch_dict = {'UNET':[Architectures.UNET,UNET_dict]}
 
@@ -144,10 +146,11 @@ default_parameters = {'opt':default_opt,'augment':default_IDG,'arch':default_UNE
 
 # plan = [{'arch':M},{'opt':O}]
 # plan = [{'arch':SM},{'opt':O}]
-plan = [{'opt':O}]
+# plan = [{'opt':O}]
+plan = [{'arch':M}]
 
 t = Testing.Trainer(default_parameters)
 
 print('Variables intialized')
 
-t.execute(plan,ds,directory='gridsearch5/',update_best_para=True,resume=True)
+t.execute(plan,ds,directory='gridsearch7/',update_best_para=True,resume=True,n_splits=3)
